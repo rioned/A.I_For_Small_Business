@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="py-16 md:py-24 bg-gray-900/30">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.7.2/vanilla-tilt.min.js"></script>
+    <div class="container mx-auto px-6">
+        <h1 class="text-4xl font-bold text-center mb-4">Our <span class="gradient-text">AI Services</span></h1>
+        <p class="text-xl text-gray-400 text-center mb-12 max-w-3xl mx-auto">
+            Leveraging artificial intelligence to enhance efficiency, engagement, and growth across various sectors.
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
+            <!-- Hotel Service Card -->
+            <div class="service-card bg-gray-800 p-8 rounded-lg shadow-lg border border-gray-700 transform hover:scale-105 transition duration-300 ease-in-out">
+                <div class="card-inner">
+                    <div class="flex items-center mb-6">
+                        <span class="text-4xl mr-4">🏨</span>
+                        <h2 class="text-2xl font-semibold text-white">Hotels & Hospitality</h2>
+                    </div>
+                    <div class="h-48 bg-gray-700 rounded-lg mb-6 overflow-hidden">
+                        <img src="{{ url_for('static', filename='img/Hospitality.png') }}" 
+                             alt="Hotel AI Solutions" 
+                             class="w-full h-full object-cover">
+                    </div>
+                    <p class="text-gray-400 mb-6">
+                        AI chatbots for guest services, dynamic pricing tools, and personalized booking experiences.
+                    </p>
+                    <div class="gradient-border"></div>
+                </div>
+            </div>
+
+            <!-- Marketing Service Card -->
+            <div class="service-card bg-gray-800 p-8 rounded-lg shadow-lg border border-gray-700 transform hover:scale-105 transition duration-300 ease-in-out">
+                <div class="card-inner">
+                    <div class="flex items-center mb-6">
+                        <span class="text-4xl mr-4">📊</span>
+                        <h2 class="text-2xl font-semibold text-white">Marketing Automation</h2>
+                    </div>
+                    <div class="h-48 bg-gray-700 rounded-lg mb-6 overflow-hidden">
+                        <img src="{{ url_for('static', filename='img/marketing.png') }}" 
+                             alt="Marketing AI" 
+                             class="w-full h-full object-cover">
+                    </div>
+                    <p class="text-gray-400 mb-6">
+                        AI-driven campaign management, customer segmentation, and performance analytics.
+                    </p>
+                    <div class="gradient-border"></div>
+                </div>
+            </div>
+
+            <!-- E-commerce Service Card -->
+            <div class="service-card bg-gray-800 p-8 rounded-lg shadow-lg border border-gray-700 transform hover:scale-105 transition duration-300 ease-in-out">
+                <div class="card-inner">
+                    <div class="flex items-center mb-6">
+                        <span class="text-4xl mr-4">🛒</span>
+                        <h2 class="text-2xl font-semibold text-white">E-commerce Solutions</h2>
+                    </div>
+                    <div class="h-48 bg-gray-700 rounded-lg mb-6 overflow-hidden">
+                        <img src="{{ url_for('static', filename='img/E-commerce.png') }}" 
+                             alt="E-commerce AI" 
+                             class="w-full h-full object-cover">
+                    </div>
+                    <p class="text-gray-400 mb-6">
+                        Product recommendation engines, inventory management, and AI-powered customer support.
+                    </p>
+                    <div class="gradient-border"></div>
+                </div>
+            </div>
+
+            <!-- Engagement Service Card -->
+            <div class="service-card bg-gray-800 p-8 rounded-lg shadow-lg border border-gray-700 transform hover:scale-105 transition duration-300 ease-in-out">
+                <div class="card-inner">
+                    <div class="flex items-center mb-6">
+                        <span class="text-4xl mr-4">💬</span>
+                        <h2 class="text-2xl font-semibold text-white">Customer Engagement</h2>
+                    </div>
+                    <div class="h-48 bg-gray-700 rounded-lg mb-6 overflow-hidden">
+                        <img src="{{ url_for('static', filename='img/Customer.png') }}" 
+                             alt="Engagement AI" 
+                             class="w-full h-full object-cover">
+                    </div>
+                    <p class="text-gray-400 mb-6">
+                        Conversational AI platforms, sentiment analysis, and personalized communication strategies.
+                    </p>
+                    <div class="gradient-border"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    VanillaTilt.init(document.querySelectorAll('.service-card'), {
+        max: 15,
+        speed: 300,
+        glare: true,
+        "max-glare": 0.2,
+        gyroscope: true,
+        scale: 1.02
+    });
+});
+</script>
+
+<style>
+.service-card {
+    backdrop-filter: blur(12px);
+    transform-style: preserve-3d;
+    transition: all 0.3s ease;
+}
+
+.service-card:hover {
+    box-shadow: 0 25px 40px rgba(0,0,0,0.2);
+}
+
+.gradient-border {
+    height: 2px;
+    background: linear-gradient(90deg, #4f46e5, #a855f7, #ec4899);
+    margin: 1rem -1rem;
+    opacity: 0.3;
+}
+
+.service-card .card-inner {
+    transform: translateZ(30px);
+}
+
+.service-card img {
+    transition: transform 0.3s ease;
+}
+
+.service-card:hover img {
+    transform: scale(1.05);
+}
+</style>
+
+{% endblock %}

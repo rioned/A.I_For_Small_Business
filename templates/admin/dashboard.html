@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-900">
+    <div class="container mx-auto px-6 py-8">
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold gradient-text">Admin Dashboard</h1>
+            <a href="{{ url_for('admin.admin_logout') }}" 
+               class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded transition duration-300">
+                Logout
+            </a>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-gray-800 p-6 rounded-lg">
+                <h3 class="text-xl font-semibold mb-2 text-indigo-400">Total Messages</h3>
+                <p class="text-3xl font-bold">{{ total_messages }}</p>
+            </div>
+            <div class="bg-gray-800 p-6 rounded-lg">
+                <h3 class="text-xl font-semibold mb-2 text-green-400">Agent Submissions</h3>
+                <p class="text-3xl font-bold">{{ total_submissions }}</p>
+            </div>
+            <div class="bg-gray-800 p-6 rounded-lg">
+                <h3 class="text-xl font-semibold mb-2 text-purple-400">Blog Posts</h3>
+                <p class="text-3xl font-bold">{{ total_posts }}</p>
+            </div>
+        </div>
+
+        <!-- Recent Messages -->
+        <div class="bg-gray-800 rounded-lg p-6 mb-8">
+            <h2 class="text-2xl font-semibold mb-4 text-white">Recent Messages</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="text-left text-gray-400 border-b border-gray-700">
+                            <th class="pb-3">Name</th>
+                            <th class="pb-3">Email</th>
+                            <th class="pb-3">Message</th>
+                            <th class="pb-3">Date</th>
+                            <th class="pb-3">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for message in messages %}
+                        <tr class="border-b border-gray-700 hover:bg-gray-700 transition">
+                            <td class="py-3">{{ message.name }}</td>
+                            <td>{{ message.email }}</td>
+                            <td class="max-w-xs truncate">{{ message.message }}</td>
+                            <td>{{ message.created_at }}</td>
+                            <td>
+                                <a href="{{ url_for('admin.delete_entry', table='messages', id=message.id) }}" 
+                                   class="text-red-400 hover:text-red-300">Delete</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Recent Agent Submissions -->
+        <div class="bg-gray-800 rounded-lg p-6 mb-8">
+            <h2 class="text-2xl font-semibold mb-4 text-white">Recent Agent Submissions</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="text-left text-gray-400 border-b border-gray-700">
+                            <th class="pb-3">Company</th>
+                            <th class="pb-3">Website</th>
+                            <th class="pb-3">Email</th>
+                            <th class="pb-3">Phone</th>
+                            <th class="pb-3">Language</th>
+                            <th class="pb-3">Date</th>
+                            <th class="pb-3">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sub in submissions %}
+                        <tr class="border-b border-gray-700 hover:bg-gray-700 transition">
+                            <td class="py-3">{{ sub.company_name }}</td>
+                            <td>{{ sub.website }}</td>
+                            <td>{{ sub.email }}</td>
+                            <td>{{ sub.phone }}</td>
+                            <td>{{ sub.language }}</td>
+                            <td>{{ sub.created_at }}</td>
+                            <td>
+                                <a href="{{ url_for('admin.delete_entry', table='agent_submissions', id=sub.id) }}" 
+                                   class="text-red-400 hover:text-red-300">Delete</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Blog Posts Management -->
+        <div class="bg-gray-800 rounded-lg p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-semibold text-white">Blog Posts</h2>
+                <a href="{{ url_for('admin.new_post') }}" class="bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded">New Post</a>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="text-left text-gray-400 border-b border-gray-700">
+                            <th class="pb-3">Title</th>
+                            <th class="pb-3">Date</th>
+                            <th class="pb-3">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for post in posts %}
+                        <tr class="border-b border-gray-700 hover:bg-gray-700 transition">
+                            <td class="py-3">{{ post.title }}</td>
+                            <td>{{ post.created_at }}</td>
+                            <td>
+                                <a href="{{ url_for('admin.edit_post', id=post.id) }}" class="text-blue-400 hover:text-blue-300 mr-3">Edit</a>
+                                <a href="{{ url_for('admin.delete_entry', table='blog_posts', id=post.id) }}" 
+                                   class="text-red-400 hover:text-red-300">Delete</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

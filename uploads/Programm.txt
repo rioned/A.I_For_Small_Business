@@ -1,0 +1,106 @@
+1Year-1term
+===========
+Init-Computer
+Analogue
+Digital
+English
+
+2 Term
+======
+Init-Computer
+Analogue
+Digital
+Program->Assembly->html,css
+English
+
+3Term
+=====
+Init-Computer(Linux,Internet,Windows)
+Digital
+Programming(assembly,c,html,css,js,php)
+Network
+English
+
+
+
+
+
+
+2Years-1 Term
+=============
+Hacking
+Digital
+Programming(assembly,c,html,css,js,php)
+Network
+
+2 Term
+=======
+Advance Hacking
+Advance Digital
+advance programming(python,c,assembly,js)
+advance netwroking
+
+3 Term
+=======
+Advance Hacking
+Advance Digital
+Advance programming(python,c/c++,assembly,js)
+Advance windows,linux,android,ios
+
+
+
+
+3Year-1 Term
+============
+Advance Hacking(Windows,Linux,Mac Os,Android,IOS)
+Advance Electronics
+Advance Programming(python,c/c++,js,android,ios)
+A.I
+
+2 Term
+======
+Hacking the Box(Certification)
+Advance Electronics
+Hardware hacking
+A.I
+
+3 Term
+=======
+Hacking the Box(Advance certification)
+A.I
+Hardware hacking
+
+
+
+
+4Year-1 Term
+============
+Hacking the splint(try hack me)
+Advance electronic warefare
+projects developpement(A.I)
+
+2 Term
+======
+Try real life hacking
+Advance electronic warefare
+projects developpement(A.I)
+
+3 Term
+=======
+Real life cyberattacks
+Advance electronic warefare
+projects developpement(A.I)
+
+
+Teams and partissions
+=====================
+=>Web = 3
+=>Network =3
+=>Android =3
+=>IOS =3 
+=>Electronics =2
+=>A.I =1
+=>Research =5 (Network =1,Android =1,IOS =1,Electronic =1,A.I =1)
+
+
+
