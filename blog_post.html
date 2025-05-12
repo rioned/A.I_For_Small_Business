@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="py-16 md:py-24">
+    <div class="container mx-auto px-6 max-w-4xl">
+        <article class="prose prose-invert">
+            <h1 class="text-4xl font-bold mb-8 gradient-text">{{ post.title }}</h1>
+            
+            {% if post.featured_image %}
+            <div class="mb-8 rounded-xl overflow-hidden">
+                <img src="{{ url_for('static', filename=post.featured_image) }}" 
+                     alt="{{ post.title }}" 
+                     class="w-full h-96 object-cover">
+            </div>
+            {% endif %}
+            
+            <div class="content">
+                {{ post.content|safe }}
+            </div>
+            
+            <div class="mt-12 border-t border-gray-700 pt-8">
+                <a href="{{ url_for('blog') }}" 
+                   class="inline-flex items-center text-indigo-400 hover:text-indigo-300">
+                    &larr; Back to Blog
+                </a>
+            </div>
+        </article>
+    </div>
+</section>
+{% endblock %}
