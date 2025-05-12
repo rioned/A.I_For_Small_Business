@@ -1,25 +1,38 @@
 # app.py
-from flask import Flask, render_template, request, redirect, url_for, session, Blueprint
+from flask import Flask, render_template, request, redirect, url_for, session, Blueprint, jsonify, send_from_directory
 import datetime
 import os
 import uuid
 import sqlite3
 import bcrypt
+import threading
 from werkzeug.utils import secure_filename
 from werkzeug.security import check_password_hash
 from werkzeug.routing import PathConverter
+from multimodel_agent import setup_provider, setup_rag_pipeline
 
-# Initialize Flask application
 app = Flask(__name__)
-app.secret_key = os.urandom(24)  # Essential for session security
-app.config['UPLOAD_FOLDER'] = 'uploads'
+app.secret_key = os.urandom(24)
+app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['ALLOWED_EXTENSIONS'] = {'pdf', 'txt', 'csv', 'png', 'jpg', 'jpeg', 'gif'}
 app.config['DATABASE'] = 'mydatabase.db'
 
-# Create admin blueprint
+# Initialize RAG pipeline with delay
+rag_chain = None
+
+def delayed_rag_init():
+    global rag_chain
+    print("\n--- Starting RAG pipeline initialization in 3 minutes ---")
+    setup_provider()
+    rag_chain = setup_rag_pipeline("http://127.0.0.1:5000", 3)
+    print("--- RAG pipeline ready ---")
+
+# Start initialization timer (180 seconds = 3 minutes)
+init_timer = threading.Timer(180, delayed_rag_init)
+init_timer.start()
+
 admin_bp = Blueprint('admin', __name__)
 
-# Database helper functions
 def get_db_connection():
     conn = sqlite3.connect(app.config['DATABASE'])
     conn.row_factory = sqlite3.Row
@@ -44,13 +57,10 @@ def init_db():
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
-        
-        # Check for featured_image column
         cursor = conn.execute('PRAGMA table_info(blog_posts)')
         columns = [column[1] for column in cursor.fetchall()]
         if 'featured_image' not in columns:
             conn.execute('ALTER TABLE blog_posts ADD COLUMN featured_image TEXT')
-
         conn.execute('''
             CREATE TABLE IF NOT EXISTS messages (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -72,8 +82,6 @@ def init_db():
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
-        
-        # Create default admin user if not exists
         admin = conn.execute('SELECT * FROM admin WHERE username = "root"').fetchone()
         if not admin:
             hashed_pw = bcrypt.hashpw('admin123'.encode('utf-8'), bcrypt.gensalt())
@@ -84,41 +92,34 @@ def init_db():
 
 init_db()
 
-# Context processor for template variables
 @app.context_processor
 def inject_now():
     return {'current_year': datetime.datetime.utcnow().year}
 
-# Helper functions
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
-# Admin routes
 @admin_bp.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-        
         try:
             conn = get_db_connection()
             admin = conn.execute('SELECT * FROM admin WHERE username = ?', (username,)).fetchone()
             conn.close()
-            
             if admin and bcrypt.checkpw(password.encode('utf-8'), admin['password_hash']):
                 session['admin_logged_in'] = True
                 return redirect(url_for('admin.admin_dashboard'))
         except sqlite3.Error as e:
             print(f"Database error: {e}")
-            
     return render_template('admin/login.html')
 
 @admin_bp.route('/admin/dashboard')
 def admin_dashboard():
     if not session.get('admin_logged_in'):
         return redirect(url_for('admin.admin_login'))
-    
     try:
         conn = get_db_connection()
         total_messages = conn.execute('SELECT COUNT(*) FROM messages').fetchone()[0]
@@ -131,7 +132,6 @@ def admin_dashboard():
     except sqlite3.Error as e:
         print(f"Database error: {e}")
         return redirect(url_for('admin.admin_login'))
-    
     return render_template('admin/dashboard.html',
                          total_messages=total_messages,
                          total_submissions=total_submissions,
@@ -144,11 +144,9 @@ def admin_dashboard():
 def delete_entry(table, id):
     if not session.get('admin_logged_in'):
         return redirect(url_for('admin.admin_login'))
-    
     valid_tables = ['messages', 'agent_submissions', 'blog_posts']
     if table not in valid_tables:
         return redirect(url_for('admin.admin_dashboard'))
-    
     try:
         conn = get_db_connection()
         conn.execute(f'DELETE FROM {table} WHERE id = ?', (id,))
@@ -156,7 +154,6 @@ def delete_entry(table, id):
         conn.close()
     except sqlite3.Error as e:
         print(f"Database error: {e}")
-    
     return redirect(url_for('admin.admin_dashboard'))
 
 @admin_bp.route('/admin/logout')
@@ -168,22 +165,18 @@ def admin_logout():
 def new_post():
     if not session.get('admin_logged_in'):
         return redirect(url_for('admin.admin_login'))
-
     if request.method == 'POST':
         title = request.form.get('title')
         content = request.form.get('content')
         featured_image = request.files.get('featured_image')
         featured_image_path = None
-
         if featured_image and allowed_file(featured_image.filename):
             filename = secure_filename(featured_image.filename)
-            # Updated path handling
             upload_dir = os.path.join(app.config['UPLOAD_FOLDER'], 'blog_images')
             os.makedirs(upload_dir, exist_ok=True)
             save_path = os.path.join(upload_dir, filename)
             featured_image.save(save_path)
-            featured_image_path = os.path.join('uploads/blog_images', filename)  
-
+            featured_image_path = f'blog_images/{filename}'
         try:
             conn = get_db_connection()
             conn.execute('''
@@ -195,31 +188,27 @@ def new_post():
             return redirect(url_for('admin.admin_dashboard'))
         except sqlite3.Error as e:
             print(f"Database error: {e}")
-
     return render_template('admin/create_post.html')
 
 @admin_bp.route('/admin/posts/edit/<int:id>', methods=['GET', 'POST'])
 def edit_post(id):
     if not session.get('admin_logged_in'):
         return redirect(url_for('admin.admin_login'))
-
     conn = get_db_connection()
     post = conn.execute('SELECT * FROM blog_posts WHERE id = ?', (id,)).fetchone()
     conn.close()
-
     if request.method == 'POST':
         title = request.form.get('title')
         content = request.form.get('content')
         featured_image = request.files.get('featured_image')
         featured_image_path = post['featured_image']
-
         if featured_image and allowed_file(featured_image.filename):
             filename = secure_filename(featured_image.filename)
             upload_dir = os.path.join(app.config['UPLOAD_FOLDER'], 'blog_images')
             os.makedirs(upload_dir, exist_ok=True)
-            featured_image_path = os.path.join(upload_dir, filename)
-            featured_image.save(featured_image_path)
-
+            save_path = os.path.join(upload_dir, filename)
+            featured_image.save(save_path)
+            featured_image_path = f'blog_images/{filename}'
         try:
             conn = get_db_connection()
             conn.execute('''
@@ -232,7 +221,6 @@ def edit_post(id):
             return redirect(url_for('admin.admin_dashboard'))
         except sqlite3.Error as e:
             print(f"Database error: {e}")
-
     return render_template('admin/edit_post.html', post=post)
 
 class EverythingConverter(PathConverter):
@@ -244,7 +232,6 @@ app.url_map.converters['everything'] = EverythingConverter
 def serve_uploads(path):
     return send_from_directory('static/uploads', path)
 
-# Main application routes
 @app.route('/')
 def home():
     return render_template('index.html', page_title='Home')
@@ -286,7 +273,6 @@ def contact():
             name = request.form.get('name')
             email = request.form.get('email')
             message = request.form.get('message')
-            
             conn = get_db_connection()
             conn.execute('INSERT INTO messages (name, email, message) VALUES (?, ?, ?)', 
                         (name, email, message))
@@ -294,9 +280,7 @@ def contact():
             conn.close()
         except sqlite3.Error as e:
             print(f"Database error: {e}")
-        
         return redirect(url_for('contact', submitted='true'))
-    
     submitted = request.args.get('submitted')
     return render_template('contact.html', page_title='Contact Us', submitted=submitted)
 
@@ -309,7 +293,6 @@ def blog():
     except sqlite3.Error as e:
         print(f"Database error: {e}")
         posts = []
-    
     return render_template('blog.html', page_title='Blog', posts=posts)
 
 @app.route('/blog/<int:post_id>')
@@ -318,10 +301,8 @@ def blog_post(post_id):
         conn = get_db_connection()
         post = conn.execute('SELECT * FROM blog_posts WHERE id = ?', (post_id,)).fetchone()
         conn.close()
-        
         if not post:
             abort(404)
-            
         return render_template('blog_post.html', 
                              page_title=post['title'],
                              post=post)
@@ -340,13 +321,11 @@ def get_agent():
             phone = request.form.get('phone')
             language = request.form.get('language')
             file = request.files.get('document')
-
             if file and allowed_file(file.filename):
                 filename = secure_filename(file.filename)
                 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
                 file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
                 file.save(file_path)
-
             conn = get_db_connection()
             conn.execute('''
                 INSERT INTO agent_submissions 
@@ -355,14 +334,12 @@ def get_agent():
             ''', (company_name, website, email, phone, language, file_path))
             conn.commit()
             conn.close()
-
             agent_id = str(uuid.uuid4())[:8]
             return redirect(url_for('get_agent', 
                                   submitted='true', 
                                   agent_link=f"{request.host_url}agent/{agent_id}"))
         except (sqlite3.Error, OSError) as e:
             print(f"Error processing submission: {e}")
-
     submitted = request.args.get('submitted')
     agent_link = request.args.get('agent_link', '#')
     return render_template('get_agent.html', 
@@ -378,7 +355,34 @@ def video():
 def page_not_found(e):
     return render_template('404.html', page_title='Page Not Found'), 404
 
+@app.route('/api/chat', methods=['POST'])
+def handle_chat():
+    try:
+        if not rag_chain:
+            return jsonify({
+                'response': "Our AI assistant is still warming up! Please try again in a few minutes.",
+                'timestamp': datetime.datetime.now().strftime("%H:%M")
+            }), 503
+            
+        data = request.get_json()
+        user_message = data.get('message', '').strip()
+        
+        if not user_message:
+            return jsonify({'error': 'Empty message'}), 400
+        
+        resp = rag_chain.invoke({"input": user_message})
+        ai_response = resp.get('answer', 'No answer found.')
+        
+        return jsonify({
+            'response': ai_response,
+            'timestamp': datetime.datetime.now().strftime("%H:%M")
+        })
+        
+    except Exception as e:
+        print(f"Chat error: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
 app.register_blueprint(admin_bp)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host="0.0.0.0", debug=True)
