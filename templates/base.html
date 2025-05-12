@@ -9,8 +9,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Soria&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* Add Soria font-face */
         @font-face {
             font-family: 'Soria';
             font-style: normal;
@@ -25,7 +25,6 @@
             color: #e0e0e0;
         }
         
-        /* Apply Soria to navigation items */
         .nav-item {
             font-family: 'Soria', serif;
             font-size: 1.1rem;
@@ -96,6 +95,136 @@
         }
         .delay-100 { animation-delay: 0.5s; }
         .delay-200 { animation-delay: 1s; }
+
+        /* New Chat Prompt Animation */
+        @keyframes floatBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        @keyframes shimmer {
+            0% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .chat-prompt {
+            position: fixed;
+            bottom: 90px;
+            right: 30px;
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            color: #2a2a2a;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            animation: 
+                floatBounce 2s ease-in-out infinite,
+                shimmer 3s ease infinite alternate;
+            opacity: 0;
+            transform: translateX(20px);
+            transition: all 0.3s ease;
+            pointer-events: none;
+            box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            text-shadow: 0 1px 2px rgba(255, 255, 255, 0.3);
+            z-index: 1001;
+            background-size: 200% 200%;
+        }
+
+        .chat-prompt.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .chat-toggle:hover + .chat-prompt {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        /* Chat Styles */
+        .chat-container {
+            position: fixed;
+            bottom: 100px;
+            right: 30px;
+            z-index: 1000;
+            width: 350px;
+            background: #0f172a;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            transform: translateY(20px);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .chat-container.active {
+            transform: translateY(0);
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .chat-toggle {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4f46e5 0%, #a855f7 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 5px 20px rgba(79, 70, 229, 0.3);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .chat-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 25px rgba(79, 70, 229, 0.4);
+        }
+
+        .chat-header {
+            background: #1e293b;
+            padding: 1rem;
+            border-radius: 15px 15px 0 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .chat-messages {
+            height: 400px;
+            overflow-y: auto;
+            padding: 1rem;
+            background: #0f172a;
+        }
+
+        .chat-input {
+            padding: 1rem;
+            background: #1e293b;
+            border-radius: 0 0 15px 15px;
+        }
+
+        .message {
+            background: #1e293b;
+            padding: 0.8rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            max-width: 80%;
+            word-break: break-word;
+        }
+
+        .message.user {
+            background: #4f46e5;
+            margin-left: auto;
+        }
+
+        .message.ai a {
+            color: #2dd4bf;
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body class="antialiased">
@@ -168,6 +297,35 @@
         </div>
     </footer>
 
+    <!-- Chat Interface -->
+    <div class="chat-toggle" onclick="toggleChat()">
+        <i class="fas fa-comment-dots text-white text-2xl"></i>
+    </div>
+    <div class="chat-prompt" id="chatPrompt">Ask me anything! 💬</div>
+
+    <div class="chat-container" id="chatContainer">
+        <div class="chat-header">
+            <div class="gradient-text font-semibold">AI Assistant</div>
+            <div class="text-sm text-emerald-400">Online</div>
+        </div>
+        <div class="chat-messages" id="chatMessages">
+            <div class="message ai">
+                <div class="text-sm text-gray-300">Hello! How can I help you today?</div>
+                <div class="text-xs text-gray-500 mt-1">Just now</div>
+            </div>
+        </div>
+        <div class="chat-input">
+            <form onsubmit="sendMessage(event)" class="flex gap-2">
+                <input type="text" id="messageInput" 
+                       class="flex-grow bg-gray-800 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                       placeholder="Type your message...">
+                <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">
+                    Send
+                </button>
+            </form>
+        </div>
+    </div>
+
     <script src="/static/particles.min.js"></script>
     <script>
         particlesJS('particles-js', {
@@ -211,6 +369,97 @@
             },
             retina_detect: true
         });
+
+        // Chat functionality
+        function toggleChat() {
+            const container = document.getElementById('chatContainer');
+            const prompt = document.getElementById('chatPrompt');
+            container.classList.toggle('active');
+            prompt.classList.toggle('visible');
+            
+            if (!container.classList.contains('active')) {
+                setTimeout(() => prompt.classList.add('visible'), 1000);
+            }
+        }
+
+        function createMessageElement(text, isUser) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user' : 'ai'}`;
+            
+            const time = new Date().toLocaleTimeString([], { 
+                hour: '2-digit', 
+                minute: '2-digit'
+            });
+            
+            messageDiv.innerHTML = `
+                <div class="text-sm text-gray-300">${text}</div>
+                <div class="text-xs text-gray-500 mt-1">${time}</div>
+            `;
+            
+            return messageDiv;
+        }
+
+        async function sendMessage(event) {
+            event.preventDefault();
+            const input = document.getElementById('messageInput');
+            const text = input.value.trim();
+            
+            if (text) {
+                const messagesContainer = document.getElementById('chatMessages');
+                
+                // Add user message
+                messagesContainer.appendChild(createMessageElement(text, true));
+                
+                try {
+                    const response = await fetch('/api/chat', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ message: text })
+                    });
+
+                    if (!response.ok) throw new Error('API error');
+                    
+                    const data = await response.json();
+                    
+                    // Add AI response
+                    messagesContainer.appendChild(createMessageElement(data.response, false));
+                    
+                } catch (error) {
+                    console.error('Chat error:', error);
+                    const errorMessage = "Sorry, we're experiencing high demand. Please try again later.";
+                    messagesContainer.appendChild(createMessageElement(errorMessage, false));
+                }
+
+                // Clear input
+                input.value = '';
+                
+                // Scroll to bottom
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+        }
+
+        // Close chat when clicking outside
+        document.addEventListener('click', (e) => {
+            const chatContainer = document.getElementById('chatContainer');
+            const chatToggle = document.querySelector('.chat-toggle');
+            const prompt = document.getElementById('chatPrompt');
+            
+            if (!chatContainer.contains(e.target) && !chatToggle.contains(e.target)) {
+                chatContainer.classList.remove('active');
+                setTimeout(() => {
+                    if (!chatContainer.classList.contains('active')) {
+                        prompt.classList.add('visible');
+                    }
+                }, 500);
+            }
+        });
+
+        // Initial prompt animation
+        setTimeout(() => {
+            document.getElementById('chatPrompt').classList.add('visible');
+        }, 2000);
     </script>
 </body>
 </html>
